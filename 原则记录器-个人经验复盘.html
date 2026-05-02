@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#0984e3">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="原则记录">
+  <title>原则记录器 · 个人经验复盘</title>
+  <style>
+    :root {
+      --bg: #f5f6fa;
+      --card: #fff;
+      --text: #2d3436;
+      --text-light: #636e72;
+      --border: #dfe6e9;
+      --shadow: 0 2px 12px rgba(0,0,0,0.06);
+      --radius: 12px;
+      --primary: #0984e3;
+      --danger: #d63031;
+      --high: #e17055;
+      --mid: #fdcb6e;
+      --low: #00b894;
+      --nav-bg: #fff;
+      --input-bg: #fafafa;
+    }
+    body.dark {
+      --bg: #1a1a2e;
+      --card: #16213e;
+      --text: #e0e0e0;
+      --text-light: #a0a0b0;
+      --border: #2a2a4a;
+      --shadow: 0 2px 12px rgba(0,0,0,0.3);
+      --nav-bg: #16213e;
+      --input-bg: #1a1a2e;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding-bottom: 80px;
+      transition: background 0.3s, color 0.3s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .container { max-width: 700px; margin: 0 auto; padding: 12px 14px; }
+
+    /* ---- 顶部标题栏 ---- */
+    .app-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 16px; background: var(--card);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+      margin-bottom: 12px; position: sticky; top: 8px; z-index: 10;
+      border: 1px solid var(--border);
+    }
+    .app-header h1 { font-size: 1.2rem; display: flex; align-items: center; gap: 6px; }
+    .header-actions { display: flex; gap: 6px; }
+    .icon-btn {
+      background: var(--input-bg); border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 10px; cursor: pointer; font-size: 1.1rem;
+      transition: 0.2s; color: var(--text);
+    }
+    .icon-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    /* ---- 底部导航 ---- */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; background: var(--nav-bg);
+      display: flex; justify-content: space-around; padding: 6px 0 calc(6px + env(safe-area-inset-bottom));
+      border-top: 1px solid var(--border); z-index: 100; box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+    }
+    .nav-tab {
+      flex: 1; text-align: center; padding: 8px 4px; cursor: pointer;
+      color: var(--text-light); font-size: 0.7rem; font-weight: 500;
+      transition: 0.2s; border: none; background: none;
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+    }
+    .nav-tab .nav-icon { font-size: 1.3rem; }
+    .nav-tab.active { color: var(--primary); font-weight: 700; }
+
+    /* ---- 卡片 ---- */
+    .card {
+      background: var(--card); border-radius: var(--radius);
+      box-shadow: var(--shadow); padding: 14px; margin-bottom: 12px;
+      border: 1px solid var(--border);
+    }
+    .card-title {
+      font-size: 1rem; font-weight: 700; margin-bottom: 10px;
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    /* ---- 表单 ---- */
+    .form-row {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;
+    }
+    .form-row > * { flex: 1 1 130px; }
+    label {
+      display: block; font-size: 0.72rem; font-weight: 600;
+      color: var(--text-light); margin-bottom: 3px;
+    }
+    input, select, textarea {
+      width: 100%; padding: 9px 10px; border: 1px solid var(--border);
+      border-radius: 8px; font-size: 0.85rem; background: var(--input-bg);
+      color: var(--text); transition: 0.2s; font-family: inherit;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(9,132,227,0.1);
+    }
+    textarea { resize: vertical; min-height: 50px; }
+    .btn {
+      display: inline-block; padding: 10px 18px; border: none;
+      border-radius: 8px; font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; transition: 0.2s; background: var(--primary); color: #fff;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-outline {
+      background: transparent; color: var(--primary);
+      border: 2px solid var(--primary);
+    }
+    .btn-danger { background: var(--danger); }
+    .btn-sm { padding: 5px 10px; font-size: 0.7rem; }
+    .btn-block { width: 100%; text-align: center; }
+
+    /* ---- 筛选栏 ---- */
+    .filter-row {
+      display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    }
+    .filter-row input, .filter-row select { flex: 1 1 100px; }
+
+    /* ---- 记录卡片 ---- */
+    .record-card {
+      background: var(--card); border-radius: var(--radius);
+      box-shadow: var(--shadow); padding: 12px; margin-bottom: 10px;
+      border-left: 4px solid var(--primary); transition: 0.2s;
+      position: relative;
+    }
+    .record-card.pinned { border-left-color: #f39c12; background: #fffdf5; }
+    body.dark .record-card.pinned { background: #2a2410; }
+    .record-card.high { border-left-color: var(--high); }
+    .record-card.mid  { border-left-color: var(--mid); }
+    .record-card.low  { border-left-color: var(--low); }
+    .record-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      flex-wrap: wrap; gap: 6px; margin-bottom: 6px;
+    }
+    .record-meta { display: flex; flex-wrap: wrap; gap: 4px; font-size: 0.7rem; color: var(--text-light); align-items: center; }
+    .badge {
+      display: inline-block; padding: 2px 7px; border-radius: 10px;
+      font-size: 0.65rem; font-weight: 600; white-space: nowrap;
+      background: #e8e8e8; color: #333;
+    }
+    body.dark .badge { background: #2d2d44; color: #ccc; }
+    .badge.high { background: #ffe1d9; color: #c0392b; }
+    .badge.mid  { background: #fff6e0; color: #b8860b; }
+    .badge.low  { background: #d5f5e8; color: #008d5e; }
+    .record-body { font-size: 0.82rem; }
+    .record-body .field { margin-bottom: 4px; }
+    .record-body .field-label {
+      font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+      color: var(--text-light); display: inline; margin-right: 4px;
+    }
+    .record-actions {
+      display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap;
+    }
+    .pin-btn {
+      position: absolute; top: 8px; right: 8px;
+      background: none; border: none; cursor: pointer; font-size: 1.1rem;
+      opacity: 0.5; transition: 0.2s;
+    }
+    .pin-btn.pinned { opacity: 1; }
+
+    /* ---- 统计 ---- */
+    .stat-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+    .stat-item {
+      flex: 1 1 100px; text-align: center; padding: 12px; border-radius: var(--radius);
+      background: var(--input-bg); border: 1px solid var(--border);
+    }
+    .stat-number { font-size: 1.8rem; font-weight: 800; color: var(--primary); }
+    .stat-label { font-size: 0.7rem; color: var(--text-light); }
+    .bar-chart { margin-top: 10px; }
+    .bar-row { display: flex; align-items: center; margin-bottom: 5px; gap: 6px; }
+    .bar-label { width: 60px; font-size: 0.7rem; text-align: right; flex-shrink: 0; color: var(--text-light); }
+    .bar-track { flex: 1; height: 18px; background: var(--border); border-radius: 9px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 9px; background: var(--primary); transition: width 0.5s; }
+
+    /* ---- 回顾卡片 ---- */
+    .review-card {
+      text-align: center; padding: 30px 16px;
+    }
+    .review-principle {
+      font-size: 1.2rem; font-weight: 600; margin: 16px 0; line-height: 1.8;
+      padding: 16px; background: var(--input-bg); border-radius: var(--radius);
+      border-left: 4px solid var(--primary);
+    }
+    .review-meta { font-size: 0.75rem; color: var(--text-light); }
+    .streak-badge {
+      display: inline-block; padding: 4px 12px; border-radius: 20px;
+      background: #ffeaa7; color: #d63031; font-weight: 700; font-size: 0.8rem;
+    }
+
+    /* ---- 安装提示 ---- */
+    .install-banner {
+      background: var(--primary); color: #fff; padding: 10px 16px;
+      border-radius: var(--radius); display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 10px; font-size: 0.85rem;
+      display: none;
+    }
+    .install-banner button {
+      background: #fff; color: var(--primary); border: none;
+      padding: 6px 14px; border-radius: 6px; font-weight: 700; cursor: pointer;
+    }
+
+    /* ---- 空状态 ---- */
+    .empty { text-align: center; padding: 40px 16px; color: var(--text-light); }
+
+    @media (max-width: 400px) {
+      .form-row > * { flex: 1 1 100%; }
+      .app-header h1 { font-size: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- 安装横幅 -->
+  <div class="install-banner" id="installBanner">
+    <span>📲 点击安装到桌面，像 App 一样使用</span>
+    <button id="installBtn">安装</button>
+  </div>
+
+  <!-- 顶部 -->
+  <div class="app-header">
+    <h1>📋 原则记录</h1>
+    <div class="header-actions">
+      <button class="icon-btn" id="darkToggle" title="切换深色模式">🌓</button>
+    </div>
+  </div>
+
+  <!-- ====== 视图容器 ====== -->
+  <div id="viewRecord" class="view">
+    <!-- 快速添加表单（可折叠） -->
+    <div class="card" id="formCard">
+      <div class="card-title">
+        <span id="formIcon">➕</span> <span id="formTitle">记录新事件</span>
+        <button class="btn btn-sm btn-outline" id="toggleFormBtn" style="margin-left:auto;">收起</button>
+      </div>
+      <div id="formBody">
+        <input type="hidden" id="editId">
+        <div class="form-row">
+          <div><label>📅 日期</label><input type="date" id="date"></div>
+          <div><label>🏷 场景</label><input type="text" id="scene" placeholder="如：职场沟通"></div>
+        </div>
+        <div class="form-row">
+          <div><label>📌 用途</label><input type="text" id="usage" placeholder="如：冲突处理"></div>
+          <div><label>⭐ 重要程度</label>
+            <select id="importance">
+              <option value="高">🔴 高</option>
+              <option value="中" selected>🟡 中</option>
+              <option value="低">🟢 低</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row"><div><label>📝 事件描述</label><textarea id="event" placeholder="发生了什么？"></textarea></div></div>
+        <div class="form-row">
+          <div><label>🔧 解决方法</label><textarea id="solution" placeholder="你怎么处理的？"></textarea></div>
+          <div><label>💡 原因 / 原则总结</label><textarea id="principle" placeholder="总结背后的原则……"></textarea></div>
+        </div>
+        <div style="text-align:right; margin-top:8px;">
+          <button class="btn" id="saveBtn">💾 保存</button>
+          <button class="btn btn-outline" id="cancelBtn" style="display:none;">取消编辑</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 筛选 -->
+    <div class="card">
+      <div class="filter-row">
+        <input type="text" id="searchInput" placeholder="🔍 搜索...">
+        <select id="filterScene"><option value="">全部场景</option></select>
+        <select id="filterImportance"><option value="">全部重要程度</option><option value="高">高</option><option value="中">中</option><option value="低">低</option></select>
+        <button class="btn btn-sm btn-outline" id="clearFilterBtn">清除</button>
+      </div>
+    </div>
+
+    <!-- 记录列表 -->
+    <div id="recordList"></div>
+  </div>
+
+  <!-- ====== 统计视图 ====== -->
+  <div id="viewStats" class="view" style="display:none;">
+    <div class="card">
+      <div class="card-title">📊 数据统计</div>
+      <div class="stat-grid" id="statGrid"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📈 按重要程度分布</div>
+      <div class="bar-chart" id="importanceChart"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🏷 热门场景 TOP 5</div>
+      <div class="bar-chart" id="sceneChart"></div>
+    </div>
+  </div>
+
+  <!-- ====== 回顾视图 ====== -->
+  <div id="viewReview" class="view" style="display:none;">
+    <div class="card review-card">
+      <div class="card-title">🎲 今日原则回顾</div>
+      <div id="streakInfo" style="margin-bottom:8px;"></div>
+      <div class="review-principle" id="reviewContent">
+        <span style="color:var(--text-light);">点击下方按钮，随机回顾一条你的原则</span>
+      </div>
+      <div class="review-meta" id="reviewMeta"></div>
+      <button class="btn btn-block" id="randomReviewBtn" style="margin-top:12px;">🔄 随机一条</button>
+      <button class="btn btn-block btn-outline" id="dailyReviewBtn" style="margin-top:6px;">📅 今日推荐（基于重要程度）</button>
+    </div>
+    <div class="card">
+      <div class="card-title">📌 置顶原则</div>
+      <div id="pinnedList"></div>
+    </div>
+  </div>
+
+  <!-- ====== 设置视图 ====== -->
+  <div id="viewSettings" class="view" style="display:none;">
+    <div class="card">
+      <div class="card-title">⚙️ 设置</div>
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+        <span>🌓 深色模式</span>
+        <button class="btn btn-sm btn-outline" id="darkModeToggle">切换</button>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+        <span>🔔 每日提醒</span>
+        <button class="btn btn-sm btn-outline" id="notificationToggle">开启通知</button>
+      </div>
+      <hr style="border:0.5px solid var(--border); margin:12px 0;">
+      <button class="btn btn-block" id="exportBtn">📤 导出备份 (JSON)</button>
+      <button class="btn btn-block btn-outline" id="importBtn" style="margin-top:6px;">📥 导入恢复</button>
+      <input type="file" id="importFile" accept=".json" style="display:none;">
+      <p style="font-size:0.7rem; color:var(--text-light); margin-top:8px; text-align:center;">
+        数据仅存储在您设备的浏览器中，不会上传到任何服务器。
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<!-- 底部导航 -->
+<nav class="bottom-nav">
+  <button class="nav-tab active" data-view="record"><span class="nav-icon">📝</span>记录</button>
+  <button class="nav-tab" data-view="stats"><span class="nav-icon">📊</span>统计</button>
+  <button class="nav-tab" data-view="review"><span class="nav-icon">🎲</span>回顾</button>
+  <button class="nav-tab" data-view="settings"><span class="nav-icon">⚙️</span>设置</button>
+</nav>
+
+<script>
+// ==================== 全局状态 ====================
+const STORAGE_KEY = 'principles_v3';
+const SETTINGS_KEY = 'principles_settings_v3';
+let records = [];
+let settings = {
+  darkMode: false,
+  pinnedIds: [],
+  lastReviewDate: null,
+  notificationEnabled: false
+};
+let editingId = null;
+let formExpanded = true;
+let deferredPrompt = null; // PWA 安装事件
+
+// ==================== DOM 元素 ====================
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
+
+// ==================== 数据操作 ====================
+function loadData() {
+  records = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || JSON.stringify({
+    darkMode: window.matchMedia('(prefers-color-scheme: dark)').matches,
+    pinnedIds: [],
+    lastReviewDate: null,
+    notificationEnabled: false
+  }));
+  applyDarkMode();
+}
+function saveRecords() { localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); }
+function saveSettings() { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
+
+// ==================== 深色模式 ====================
+function applyDarkMode() {
+  document.body.classList.toggle('dark', settings.darkMode);
+}
+function toggleDarkMode() {
+  settings.darkMode = !settings.darkMode;
+  applyDarkMode();
+  saveSettings();
+}
+
+// ==================== 设置默认日期 ====================
+function setDefaultDate() {
+  const dateEl = $('#date');
+  if (!dateEl.value) {
+    dateEl.value = new Date().toISOString().split('T')[0];
+  }
+}
+
+// ==================== 更新筛选下拉 ====================
+function updateFilterOptions() {
+  const scenes = [...new Set(records.map(r => r.scene).filter(Boolean))].sort();
+  const sel = $('#filterScene');
+  const curVal = sel.value;
+  sel.innerHTML = '<option value="">全部场景</option>';
+  scenes.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; sel.appendChild(o); });
+  sel.value = curVal;
+}
+
+// ==================== 渲染记录列表 ====================
+function renderRecords() {
+  const searchTerm = ($('#searchInput').value || '').toLowerCase().trim();
+  const sceneFilter = $('#filterScene').value;
+  const impFilter = $('#filterImportance').value;
+
+  let filtered = records.filter(r => {
+    if (sceneFilter && r.scene !== sceneFilter) return false;
+    if (impFilter && r.importance !== impFilter) return false;
+    if (searchTerm) {
+      const all = `${r.scene} ${r.usage} ${r.event} ${r.solution} ${r.principle}`.toLowerCase();
+      if (!all.includes(searchTerm)) return false;
+    }
+    return true;
+  });
+
+  // 排序：置顶优先，再按日期降序
+  filtered.sort((a, b) => {
+    const aPin = settings.pinnedIds.includes(a.id) ? 1 : 0;
+    const bPin = settings.pinnedIds.includes(b.id) ? 1 : 0;
+    if (bPin !== aPin) return bPin - aPin;
+    return b.date.localeCompare(a.date);
+  });
+
+  const list = $('#recordList');
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="empty">📭 还没有记录，点击上方表单开始记录吧！</div>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(r => {
+    const isPinned = settings.pinnedIds.includes(r.id);
+    const impClass = r.importance === '高' ? 'high' : (r.importance === '低' ? 'low' : 'mid');
+    const impEmoji = r.importance === '高' ? '🔴' : (r.importance === '低' ? '🟢' : '🟡');
+    return `
+      <div class="record-card ${impClass} ${isPinned ? 'pinned' : ''}">
+        <button class="pin-btn ${isPinned ? 'pinned' : ''}" onclick="togglePin('${r.id}')" title="置顶/取消置顶">
+          ${isPinned ? '📌' : '📍'}
+        </button>
+        <div class="record-header">
+          <div class="record-meta">
+            <span>📅 ${r.date}</span>
+            <span class="badge ${impClass}">${impEmoji} ${r.importance}重要</span>
+            <span class="badge">🏷 ${escHtml(r.scene)}</span>
+            <span class="badge">📌 ${escHtml(r.usage)}</span>
+          </div>
+        </div>
+        <div class="record-body">
+          <div class="field"><span class="field-label">📝 事件:</span> ${escHtml(r.event)}</div>
+          ${r.solution ? `<div class="field"><span class="field-label">🔧 解决:</span> ${escHtml(r.solution)}</div>` : ''}
+          ${r.principle ? `<div class="field"><span class="field-label">💡 原则:</span> ${escHtml(r.principle)}</div>` : ''}
+        </div>
+        <div class="record-actions">
+          <button class="btn btn-sm" onclick="editRecord('${r.id}')">✏️ 编辑</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteRecord('${r.id}')">🗑 删除</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function escHtml(t) {
+  const d = document.createElement('div');
+  d.textContent = t || '';
+  return d.innerHTML;
+}
+
+// ==================== 置顶切换 ====================
+function togglePin(id) {
+  const idx = settings.pinnedIds.indexOf(id);
+  if (idx >= 0) settings.pinnedIds.splice(idx, 1);
+  else settings.pinnedIds.push(id);
+  saveSettings();
+  renderRecords();
+  renderPinnedList();
+}
+
+// ==================== 表单操作 ====================
+function resetForm() {
+  $('#editId').value = '';
+  setDefaultDate();
+  $('#scene').value = '';
+  $('#usage').value = '';
+  $('#importance').value = '中';
+  $('#event').value = '';
+  $('#solution').value = '';
+  $('#principle').value = '';
+  editingId = null;
+  $('#formTitle').textContent = '记录新事件';
+  $('#formIcon').textContent = '➕';
+  $('#saveBtn').textContent = '💾 保存';
+  $('#cancelBtn').style.display = 'none';
+}
+
+function handleSave() {
+  const date = $('#date').value.trim();
+  const scene = $('#scene').value.trim();
+  const usage = $('#usage').value.trim();
+  const importance = $('#importance').value;
+  const event = $('#event').value.trim();
+  const solution = $('#solution').value.trim();
+  const principle = $('#principle').value.trim();
+
+  if (!date || !scene || !event) { alert('请至少填写：日期、场景和事件描述'); return; }
+
+  if (editingId) {
+    const rec = records.find(r => r.id === editingId);
+    if (rec) Object.assign(rec, { date, scene, usage, importance, event, solution, principle });
+  } else {
+    records.push({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      date, scene, usage, importance, event, solution, principle,
+      createdAt: new Date().toISOString()
+    });
+  }
+  saveRecords();
+  resetForm();
+  updateFilterOptions();
+  refreshAllViews();
+}
+
+function editRecord(id) {
+  const r = records.find(r => r.id === id);
+  if (!r) return;
+  editingId = id;
+  $('#editId').value = id;
+  $('#date').value = r.date;
+  $('#scene').value = r.scene;
+  $('#usage').value = r.usage || '';
+  $('#importance').value = r.importance;
+  $('#event').value = r.event;
+  $('#solution').value = r.solution || '';
+  $('#principle').value = r.principle || '';
+  $('#formTitle').textContent = '编辑记录';
+  $('#formIcon').textContent = '✏️';
+  $('#saveBtn').textContent = '💾 更新';
+  $('#cancelBtn').style.display = 'inline-block';
+  // 展开表单并滚动到顶部
+  if (!formExpanded) toggleForm();
+  $('#formCard').scrollIntoView({ behavior: 'smooth' });
+  switchView('record');
+}
+
+function deleteRecord(id) {
+  if (!confirm('确定删除？此操作不可恢复。')) return;
+  records = records.filter(r => r.id !== id);
+  settings.pinnedIds = settings.pinnedIds.filter(pid => pid !== id);
+  saveRecords();
+  saveSettings();
+  updateFilterOptions();
+  refreshAllViews();
+  if (editingId === id) resetForm();
+}
+
+function toggleForm() {
+  formExpanded = !formExpanded;
+  $('#formBody').style.display = formExpanded ? 'block' : 'none';
+  $('#toggleFormBtn').textContent = formExpanded ? '收起' : '展开';
+}
+
+// ==================== 统计视图 ====================
+function renderStats() {
+  const total = records.length;
+  const high = records.filter(r => r.importance === '高').length;
+  const mid = records.filter(r => r.importance === '中').length;
+  const low = records.filter(r => r.importance === '低').length;
+  const scenes = {};
+  records.forEach(r => { const s = r.scene || '未分类'; scenes[s] = (scenes[s] || 0) + 1; });
+  const topScenes = Object.entries(scenes).sort((a,b) => b[1] - a[1]).slice(0, 5);
+  const maxScene = topScenes[0] ? topScenes[0][1] : 1;
+
+  $('#statGrid').innerHTML = `
+    <div class="stat-item"><div class="stat-number">${total}</div><div class="stat-label">总记录</div></div>
+    <div class="stat-item"><div class="stat-number">${high}</div><div class="stat-label">🔴 高重要</div></div>
+    <div class="stat-item"><div class="stat-number">${mid}</div><div class="stat-label">🟡 中重要</div></div>
+    <div class="stat-item"><div class="stat-number">${low}</div><div class="stat-label">🟢 低重要</div></div>
+  `;
+
+  const maxImp = Math.max(high, mid, low, 1);
+  $('#importanceChart').innerHTML = `
+    <div class="bar-row"><span class="bar-label">🔴 高</span><div class="bar-track"><div class="bar-fill" style="width:${(high/maxImp*100).toFixed(0)}%; background:#e17055;"></div></div><span style="font-size:0.7rem;">${high}</span></div>
+    <div class="bar-row"><span class="bar-label">🟡 中</span><div class="bar-track"><div class="bar-fill" style="width:${(mid/maxImp*100).toFixed(0)}%; background:#fdcb6e;"></div></div><span style="font-size:0.7rem;">${mid}</span></div>
+    <div class="bar-row"><span class="bar-label">🟢 低</span><div class="bar-track"><div class="bar-fill" style="width:${(low/maxImp*100).toFixed(0)}%; background:#00b894;"></div></div><span style="font-size:0.7rem;">${low}</span></div>
+  `;
+
+  $('#sceneChart').innerHTML = topScenes.map(([s, c]) => `
+    <div class="bar-row"><span class="bar-label">${escHtml(s)}</span><div class="bar-track"><div class="bar-fill" style="width:${(c/maxScene*100).toFixed(0)}%;"></div></div><span style="font-size:0.7rem;">${c}</span></div>
+  `).join('') || '<div class="empty">暂无数据</div>';
+}
+
+// ==================== 回顾视图 ====================
+function renderReview() {
+  // 连续回顾天数
+  const today = new Date().toISOString().split('T')[0];
+  const lastReview = settings.lastReviewDate;
+  let streak = 0;
+  if (lastReview === today) streak = 1; // 简单处理，实际可计算连续天数
+  $('#streakInfo').innerHTML = lastReview === today
+    ? '<span class="streak-badge">🔥 今日已回顾</span>'
+    : '<span style="font-size:0.8rem; color:var(--text-light);">今天还没回顾哦～</span>';
+
+  renderPinnedList();
+}
+
+function getRandomRecord() {
+  if (records.length === 0) return null;
+  // 按重要程度加权随机：高3x，中2x，低1x
+  const weights = records.map(r => r.importance === '高' ? 3 : r.importance === '中' ? 2 : 1);
+  const totalW = weights.reduce((a,b) => a+b, 0);
+  let rand = Math.random() * totalW;
+  for (let i = 0; i < records.length; i++) {
+    rand -= weights[i];
+    if (rand <= 0) return records[i];
+  }
+  return records[records.length - 1];
+}
+
+function showRandomReview() {
+  const r = getRandomRecord();
+  if (!r) {
+    $('#reviewContent').innerHTML = '<span style="color:var(--text-light);">还没有记录，先去记录一条吧！</span>';
+    $('#reviewMeta').textContent = '';
+    return;
+  }
+  $('#reviewContent').textContent = `"${r.principle || r.event}"`;
+  $('#reviewMeta').innerHTML = `
+    <span class="badge">🏷 ${escHtml(r.scene)}</span>
+    <span class="badge">📌 ${escHtml(r.usage || '未分类')}</span>
+    <span class="badge ${r.importance === '高' ? 'high' : r.importance === '低' ? 'low' : 'mid'}">${r.importance}重要</span>
+    <br><small>📅 ${r.date}</small>
+  `;
+  settings.lastReviewDate = new Date().toISOString().split('T')[0];
+  saveSettings();
+  renderReview();
+}
+
+function showDailyReview() {
+  // 基于日期哈希选择一条记录，保证同一天看到同一条
+  if (records.length === 0) {
+    $('#reviewContent').innerHTML = '<span style="color:var(--text-light);">还没有记录</span>';
+    return;
+  }
+  const today = new Date().toISOString().split('T')[0];
+  const hash = today.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+  const idx = hash % records.length;
+  const r = records[idx];
+  $('#reviewContent').textContent = `"${r.principle || r.event}"`;
+  $('#reviewMeta').innerHTML = `
+    <span class="badge">🏷 ${escHtml(r.scene)}</span>
+    <span class="badge">📌 ${escHtml(r.usage || '未分类')}</span>
+    <span class="badge ${r.importance === '高' ? 'high' : r.importance === '低' ? 'low' : 'mid'}">${r.importance}重要</span>
+    <br><small>📅 ${r.date}</small>
+  `;
+  settings.lastReviewDate = today;
+  saveSettings();
+  renderReview();
+}
+
+function renderPinnedList() {
+  const pinned = records.filter(r => settings.pinnedIds.includes(r.id));
+  const list = $('#pinnedList');
+  if (pinned.length === 0) {
+    list.innerHTML = '<div class="empty">📌 在记录列表中点击 📍 图标可以置顶重要原则</div>';
+    return;
+  }
+  list.innerHTML = pinned.map(r => `
+    <div style="padding:8px; background:var(--input-bg); border-radius:8px; margin-bottom:6px; border-left:3px solid #f39c12;">
+      <strong>${escHtml(r.principle || r.event)}</strong>
+      <div style="font-size:0.7rem; color:var(--text-light);">${escHtml(r.scene)} · ${escHtml(r.usage || '')} · ${r.date}</div>
+    </div>
+  `).join('');
+}
+
+// ==================== 视图切换 ====================
+function switchView(viewName) {
+  ['record', 'stats', 'review', 'settings'].forEach(v => {
+    $(`#view${v.charAt(0).toUpperCase() + v.slice(1)}`).style.display = v === viewName ? 'block' : 'none';
+  });
+  $$('.nav-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.view === viewName);
+  });
+  if (viewName === 'stats') renderStats();
+  if (viewName === 'review') renderReview();
+}
+
+function refreshAllViews() {
+  renderRecords();
+  updateFilterOptions();
+  // 如果当前在统计或回顾视图，也刷新
+  const activeTab = document.querySelector('.nav-tab.active');
+  if (activeTab && activeTab.dataset.view === 'stats') renderStats();
+  if (activeTab && activeTab.dataset.view === 'review') renderReview();
+}
+
+// ==================== 导出导入 ====================
+function exportData() {
+  const blob = new Blob([JSON.stringify({ records, settings }, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `principles_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.records || !Array.isArray(data.records)) throw new Error('格式错误');
+      if (!confirm(`即将导入 ${data.records.length} 条记录。合并还是替换？\n点击"确定"合并，"取消"放弃。`)) return;
+      // 合并：同ID覆盖，新增追加
+      const idMap = new Map(records.map(r => [r.id, r]));
+      data.records.forEach(r => idMap.set(r.id, r));
+      records = [...idMap.values()];
+      if (data.settings) settings = { ...settings, ...data.settings };
+      saveRecords();
+      saveSettings();
+      refreshAllViews();
+      alert('导入成功！');
+    } catch (err) {
+      alert('导入失败：文件格式不正确。');
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ==================== 通知 ====================
+function requestNotification() {
+  if (!('Notification' in window)) {
+    alert('您的浏览器不支持通知功能');
+    return;
+  }
+  Notification.requestPermission().then(perm => {
+    if (perm === 'granted') {
+      settings.notificationEnabled = true;
+      saveSettings();
+      alert('通知已开启！每天会提醒你记录原则。');
+      scheduleNotification();
+    } else {
+      settings.notificationEnabled = false;
+      saveSettings();
+      alert('通知被拒绝。你可以稍后在设置中重新开启。');
+    }
+  });
+}
+
+function scheduleNotification() {
+  if (!settings.notificationEnabled) return;
+  // 简单实现：设置一个每日定时检查（实际PWA需要Service Worker支持后台通知）
+  // 这里我们使用页面打开时的简单提醒
+  const now = new Date();
+  const reminderHour = 20; // 晚上8点提醒
+  if (now.getHours() === reminderHour && now.getMinutes() < 5) {
+    if (Notification.permission === 'granted') {
+      new Notification('📋 原则记录', { body: '今天有什么值得总结的事件吗？花1分钟记录一下吧！', icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">📋</text></svg>' });
+    }
+  }
+}
+
+// ==================== PWA 安装 ====================
+function registerPWA() {
+  // 动态创建 manifest
+  const manifest = {
+    name: '原则记录器',
+    short_name: '原则记录',
+    description: '个人生活经验与原则复盘工具',
+    start_url: '.',
+    display: 'standalone',
+    background_color: '#f5f6fa',
+    theme_color: '#0984e3',
+    icons: [
+      { src: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" rx="32" fill="#0984e3"/><text x="96" y="120" font-size="100" text-anchor="middle" fill="white">📋</text></svg>'), sizes: '192x192', type: 'image/svg+xml' },
+      { src: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="64" fill="#0984e3"/><text x="256" y="320" font-size="280" text-anchor="middle" fill="white">📋</text></svg>'), sizes: '512x512', type: 'image/svg+xml' }
+    ]
+  };
+  const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+  const manifestURL = URL.createObjectURL(blob);
+  const link = document.createElement('link');
+  link.rel = 'manifest';
+  link.href = manifestURL;
+  document.head.appendChild(link);
+
+  // 注册 Service Worker
+  if ('serviceWorker' in navigator) {
+    const swCode = `
+      const CACHE = 'principles-v1';
+      const ASSETS = ['/'];
+      self.addEventListener('install', e => {
+        e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS).catch(() => {})));
+        self.skipWaiting();
+      });
+      self.addEventListener('fetch', e => {
+        e.respondWith(
+          caches.match(e.request).then(r => r || fetch(e.request).then(resp => {
+            if (resp.ok) {
+              const clone = resp.clone();
+              caches.open(CACHE).then(c => c.put(e.request, clone));
+            }
+            return resp;
+          }).catch(() => caches.match(e.request)))
+        );
+      });
+      self.addEventListener('activate', e => {
+        e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))));
+      });
+    `;
+    const swBlob = new Blob([swCode], { type: 'application/javascript' });
+    const swURL = URL.createObjectURL(swBlob);
+    navigator.serviceWorker.register(swURL).catch(() => {
+      // Service Worker 在 file:// 协议下无法注册，静默失败
+    });
+  }
+
+  // 监听安装事件
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    $('#installBanner').style.display = 'flex';
+  });
+  window.addEventListener('appinstalled', () => {
+    $('#installBanner').style.display = 'none';
+    deferredPrompt = null;
+  });
+}
+
+function installApp() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => {
+      deferredPrompt = null;
+      $('#installBanner').style.display = 'none';
+    });
+  } else {
+    alert('安装功能暂不可用。您可以手动：\n• iPhone: 点击分享 → 添加到主屏幕\n• Android: 点击菜单 → 添加到主屏幕');
+  }
+}
+
+// ==================== 事件绑定 ====================
+function bindEvents() {
+  // 表单
+  $('#saveBtn').addEventListener('click', handleSave);
+  $('#cancelBtn').addEventListener('click', resetForm);
+  $('#toggleFormBtn').addEventListener('click', toggleForm);
+
+  // 筛选
+  $('#searchInput').addEventListener('input', renderRecords);
+  $('#filterScene').addEventListener('change', renderRecords);
+  $('#filterImportance').addEventListener('change', renderRecords);
+  $('#clearFilterBtn').addEventListener('click', () => {
+    $('#searchInput').value = '';
+    $('#filterScene').value = '';
+    $('#filterImportance').value = '';
+    renderRecords();
+  });
+
+  // 导航
+  $$('.nav-tab').forEach(tab => {
+    tab.addEventListener('click', () => switchView(tab.dataset.view));
+  });
+
+  // 深色模式
+  $('#darkToggle').addEventListener('click', toggleDarkMode);
+  $('#darkModeToggle').addEventListener('click', toggleDarkMode);
+
+  // 导出导入
+  $('#exportBtn').addEventListener('click', exportData);
+  $('#importBtn').addEventListener('click', () => $('#importFile').click());
+  $('#importFile').addEventListener('change', (e) => {
+    if (e.target.files[0]) importData(e.target.files[0]);
+    e.target.value = '';
+  });
+
+  // 回顾
+  $('#randomReviewBtn').addEventListener('click', showRandomReview);
+  $('#dailyReviewBtn').addEventListener('click', showDailyReview);
+
+  // 通知
+  $('#notificationToggle').addEventListener('click', requestNotification);
+
+  // 安装
+  $('#installBtn').addEventListener('click', installApp);
+}
+
+// 全局函数暴露给 HTML onclick
+window.togglePin = togglePin;
+window.editRecord = editRecord;
+window.deleteRecord = deleteRecord;
+
+// ==================== 初始化 ====================
+function init() {
+  loadData();
+  setDefaultDate();
+  updateFilterOptions();
+  renderRecords();
+  registerPWA();
+  bindEvents();
+  // 检查每日提醒
+  scheduleNotification();
+}
+
+init();
+</script>
+</body>
+</html>
